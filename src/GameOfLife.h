@@ -16,6 +16,8 @@ private:
 	static constexpr int cellSize = 25; //size of a single cell in pixels
 	static constexpr int wndSize = 800; //width and height of the window
 
+	sf::Vector2i mousePosWnd;
+	sf::Vector2f mousePosView;
 private:
 	void update();
 	void render();
