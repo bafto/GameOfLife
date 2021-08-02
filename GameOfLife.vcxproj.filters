@@ -26,5 +26,8 @@
     <ClInclude Include="src\GameOfLife.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
+    <ClInclude Include="src\VectorHash.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

@@ -1,8 +1,6 @@
 #pragma once
 
-#include "SFML/Graphics.hpp"
-#include <map>
-#include <array>
+#include "VectorHash.h"
 
 class GameOfLife
 {
@@ -23,5 +21,11 @@ private:
 	void render();
 
 	void drawGrid();
+	void drawCells();
+
+	sf::Vector2i getIntPos(sf::Vector2f pos);
+private:
+	std::unordered_set<sf::Vector2i> cells;
+	bool paused;
 };
 
