@@ -24,8 +24,16 @@ private:
 	void drawCells();
 
 	sf::Vector2i getIntPos(sf::Vector2f pos);
+
+	int getCellNeighbours(sf::Vector2i cell);
 private:
 	std::unordered_set<sf::Vector2i> cells;
 	bool paused;
+	int ticksPerSecond;
+	sf::Clock tickClock;
+
+	sf::Font font;
+	sf::Text pauseText;
+	sf::Text tpsText;
 };
 

@@ -5,8 +5,23 @@
 GameOfLife::GameOfLife()
 	:
 	wnd(sf::VideoMode(wndSize, wndSize), "Game of Life", sf::Style::Titlebar | sf::Style::Close),
-	paused(true)
-{}
+	paused(true),
+	ticksPerSecond(5)
+{
+	font.loadFromFile("arial.ttf");
+
+	pauseText.setCharacterSize(20);
+	pauseText.setFillColor(sf::Color(50, 50, 50));
+	pauseText.setPosition({ 1.f, 1.f });
+	pauseText.setString("Paused");
+	pauseText.setFont(font);
+
+	tpsText.setCharacterSize(20);
+	tpsText.setFillColor(sf::Color(50, 50, 50));
+	tpsText.setPosition({ wndSize - 80.f, 1.f });
+	tpsText.setString("TpS: " + std::to_string(ticksPerSecond));
+	tpsText.setFont(font);
+}
 
 void GameOfLife::run()
 {
@@ -15,6 +30,7 @@ void GameOfLife::run()
 		mousePosWnd = sf::Mouse::getPosition(wnd);
 		mousePosView = wnd.mapPixelToCoords(mousePosWnd);
 		sf::Event e;
+		int rightClickFactor = sf::Mouse::isButtonPressed(sf::Mouse::Right) ? 10 : 1;
 		while (wnd.pollEvent(e))
 		{
 			switch (e.type)
@@ -24,22 +40,32 @@ void GameOfLife::run()
 			{
 				switch (e.key.code)
 				{
+				case sf::Keyboard::Q:
+					ticksPerSecond--;
+					if (ticksPerSecond <= 0) ticksPerSecond = 1;
+					tpsText.setString("TpS: " + std::to_string(ticksPerSecond));
+					break;
+				case sf::Keyboard::E:
+					ticksPerSecond++;
+					tpsText.setString("TpS: " + std::to_string(ticksPerSecond));
+					break;
 				case sf::Keyboard::Space: paused = !paused; break;
+				case sf::Keyboard::Enter: cells.clear(); break;
 				case sf::Keyboard::W:
 				case sf::Keyboard::Up:
-					wnd.setView(sf::View(wnd.getView().getCenter() + sf::Vector2f(0.f, -cellSize), wnd.getView().getSize()));
+					wnd.setView(sf::View(wnd.getView().getCenter() + sf::Vector2f(0.f, -cellSize * rightClickFactor), wnd.getView().getSize()));
 					break;
 				case sf::Keyboard::A:
 				case sf::Keyboard::Left:
-					wnd.setView(sf::View(wnd.getView().getCenter() + sf::Vector2f(-cellSize, 0.f), wnd.getView().getSize()));
+					wnd.setView(sf::View(wnd.getView().getCenter() + sf::Vector2f(-cellSize * rightClickFactor, 0.f), wnd.getView().getSize()));
 					break;
 				case sf::Keyboard::S:
 				case sf::Keyboard::Down:
-					wnd.setView(sf::View(wnd.getView().getCenter() + sf::Vector2f(0.f, cellSize), wnd.getView().getSize()));
+					wnd.setView(sf::View(wnd.getView().getCenter() + sf::Vector2f(0.f, cellSize * rightClickFactor), wnd.getView().getSize()));
 					break;
 				case sf::Keyboard::D:
 				case sf::Keyboard::Right:
-					wnd.setView(sf::View(wnd.getView().getCenter() + sf::Vector2f(cellSize, 0.f), wnd.getView().getSize()));
+					wnd.setView(sf::View(wnd.getView().getCenter() + sf::Vector2f(cellSize * rightClickFactor, 0.f), wnd.getView().getSize()));
 					break;
 				default: break;
 				}
@@ -47,7 +73,13 @@ void GameOfLife::run()
 			}
 			case sf::Event::MouseWheelScrolled:
 			{
-				wnd.setView(sf::View(wnd.getView().getCenter(), sf::Vector2f(wnd.getView().getSize() + sf::Vector2f(cellSize * -e.mouseWheelScroll.delta * 2, cellSize * -e.mouseWheelScroll.delta * 2))));
+				if (wnd.getView().getSize().x <= cellSize * 4 && e.mouseWheelScroll.delta > 0)
+					break;
+
+				if (sf::Mouse::isButtonPressed(sf::Mouse::Right) && wnd.getView().getSize().x >= 100 * rightClickFactor)
+					wnd.setView(sf::View(wnd.getView().getCenter(), sf::Vector2f(wnd.getView().getSize() + sf::Vector2f(cellSize * -e.mouseWheelScroll.delta * rightClickFactor, cellSize * -e.mouseWheelScroll.delta * 10))));
+				else
+					wnd.setView(sf::View(wnd.getView().getCenter(), sf::Vector2f(wnd.getView().getSize() + sf::Vector2f(cellSize * -e.mouseWheelScroll.delta * 2, cellSize * -e.mouseWheelScroll.delta * 2))));
 				break;
 			}
 			case sf::Event::MouseButtonPressed:
@@ -72,9 +104,41 @@ void GameOfLife::run()
 
 void GameOfLife::update()
 {
-	if (!paused)
+	if (tickClock.getElapsedTime().asMilliseconds() >= 1000 / ticksPerSecond)
 	{
-
+		if (!paused)
+		{
+			std::unordered_set<sf::Vector2i> newSet = cells;
+			std::unordered_set<sf::Vector2i> cellsToProcess = cells;
+			for (auto it = cells.begin(), end = cells.end(); it != end; it++)
+			{
+				for (int x = it->x - 1; x <= it->x + 1; x++)
+				{
+					for (int y = it->y - 1; y <= it->y + 1; y++)
+					{
+						cellsToProcess.insert(sf::Vector2i(x, y));
+					}
+				}
+			}
+			for (auto it = cellsToProcess.begin(), end = cellsToProcess.end(); it != end; it++)
+			{
+				int neighbours = getCellNeighbours(*it);
+				if (cells.count(*it) == 1)
+				{
+					if (neighbours < 2)
+						newSet.erase(*it);
+					else if (neighbours > 3)
+						newSet.erase(*it);
+				}
+				else
+				{
+					if (neighbours == 3)
+						newSet.insert(*it);
+				}
+			}
+			cells = newSet;
+		}
+		tickClock.restart();
 	}
 }
 
@@ -120,6 +184,9 @@ void GameOfLife::drawGrid()
 	}
 	// draw it
 	wnd.draw(grid);
+	if (paused)
+		wnd.draw(pauseText);
+	wnd.draw(tpsText);
 	wnd.setView(oldView);
 
 	sf::RectangleShape shape(sf::Vector2f(cellSize, cellSize));
@@ -150,4 +217,18 @@ sf::Vector2i GameOfLife::getIntPos(sf::Vector2f pos)
 	int xPos = pos.x < 0 ? (int)((pos.x - cellSize) / (float)cellSize) : (int)((pos.x) / (float)cellSize);
 	int yPos = pos.y < 0 ? (int)((pos.y - cellSize) / (float)cellSize) : (int)((pos.y) / (float)cellSize);
 	return sf::Vector2i(xPos, yPos);
+}
+
+int GameOfLife::getCellNeighbours(sf::Vector2i cell)
+{
+	int count = 0; //-1 to subtract the cell itself
+	for (int x = cell.x - 1; x <= cell.x + 1; x++)
+	{
+		for (int y = cell.y - 1; y <= cell.y + 1; y++)
+		{
+			if (sf::Vector2i(x, y) != cell && cells.count(sf::Vector2i(x, y)) == 1)
+				count++;
+		}
+	}
+	return count;
 }
