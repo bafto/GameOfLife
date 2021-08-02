@@ -1,4 +1,5 @@
 #include "GameOfLife.h"
+#include <fstream>
 
 #pragma warning (disable : 4244)
 
@@ -67,6 +68,25 @@ void GameOfLife::run()
 				case sf::Keyboard::Right:
 					wnd.setView(sf::View(wnd.getView().getCenter() + sf::Vector2f(cellSize * rightClickFactor, 0.f), wnd.getView().getSize()));
 					break;
+#ifndef NDEBUG
+				case sf::Keyboard::P:
+				{
+					std::ofstream ofs;
+					ofs.open("out.txt", std::ios_base::trunc);
+					for (auto it = cells.begin(), end = cells.end(); it != end; it++)
+					{
+						ofs << "{" << it->x << ", " << it->y << "},\n";
+					}
+					ofs.close();
+					break;
+				}
+#endif
+				case sf::Keyboard::Num1:
+				{
+					cells.clear();
+					cells = pre::gliderGun;
+					break;
+				}
 				default: break;
 				}
 				break;

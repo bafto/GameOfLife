@@ -1,6 +1,6 @@
 #pragma once
 
-#include "VectorHash.h"
+#include "Premades.h"
 
 class GameOfLife
 {
