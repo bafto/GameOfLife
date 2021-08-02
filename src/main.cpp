@@ -1,22 +1,9 @@
-#include "SFML/Graphics.hpp"
+#include "GameOfLife.h"
 
 int main()
 {
-	sf::RenderWindow wnd(sf::VideoMode(800, 600), "Game of Life");
-	sf::Event e;
-
-	while (wnd.isOpen())
-	{
-		while (wnd.pollEvent(e))
-		{
-			if (e.type == sf::Event::Closed)
-				wnd.close();
-		}
-
-		wnd.clear(sf::Color::Blue);
-
-		wnd.display();
-	}
+	GameOfLife game;
+	game.run();
 
 	return 0;
 }
