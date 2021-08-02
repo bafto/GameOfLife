@@ -69,6 +69,7 @@ void GameOfLife::render()
 	shape.setPosition(sf::Vector2f(0, 0));
 	shape.setFillColor(sf::Color::Red);
 	wnd.draw(shape);
+
 	drawGrid();
 
 	wnd.display();
@@ -76,26 +77,35 @@ void GameOfLife::render()
 
 void GameOfLife::drawGrid()
 {
-	sf::RectangleShape shape;
-	shape.setFillColor(sf::Color::Transparent);
-	shape.setSize(sf::Vector2f(cellSize, cellSize));
-	shape.setOutlineColor(sf::Color(128, 128, 128));
-	shape.setOutlineThickness(1);
-	sf::View lastView = wnd.getView();
-	sf::View tempView = lastView;
-	tempView.setCenter(sf::Vector2f(0.f + tempView.getSize().x / 2, 0.f + tempView.getSize().y / 2));
-	wnd.setView(tempView);
-	sf::Vector2f mousePosView = wnd.mapPixelToCoords(mousePosWnd);
-	for (unsigned int y = 0; y < (int)(tempView.getSize().y / cellSize); y++)
-	{
-		for (unsigned int x = 0; x < (int)(tempView.getSize().x / cellSize); x++)
-		{
-			shape.setPosition(sf::Vector2f(x * cellSize, y * cellSize));
-			if (shape.getGlobalBounds().contains((sf::Vector2f)mousePosView))
-				shape.setFillColor(sf::Color(170, 170, 170));
-			wnd.draw(shape);
-			shape.setFillColor(sf::Color::Transparent);
-		}
+	sf::View oldView = wnd.getView();
+	int rows = oldView.getSize().x / cellSize;
+	int cols = oldView.getSize().y / cellSize;
+	// initialize values
+	int numLines = rows + cols - 2;
+	sf::VertexArray grid(sf::Lines, 2 * (numLines));
+	wnd.setView(wnd.getDefaultView());
+	auto size = wnd.getView().getSize();
+	float rowH = size.y / rows;
+	float colW = size.x / cols;
+	// row separators
+	for (int i = 0; i < rows - 1; i++) {
+		int r = i + 1;
+		float rowY = rowH * r;
+		grid[i * 2].position = { 0, rowY };
+		grid[i * 2].color = sf::Color(128, 128, 128);
+		grid[i * 2 + 1].position = { size.x, rowY };
+		grid[i * 2 + 1].color = sf::Color(128, 128, 128);
 	}
-	wnd.setView(lastView);
+	// column separators
+	for (int i = rows - 1; i < numLines; i++) {
+		int c = i - rows + 2;
+		float colX = colW * c;
+		grid[i * 2].position = { colX, 0 };
+		grid[i * 2].color = sf::Color(128, 128, 128);
+		grid[i * 2 + 1].position = { colX, size.y };
+		grid[i * 2 + 1].color = sf::Color(128, 128, 128);
+	}
+	// draw it
+	wnd.draw(grid);
+	wnd.setView(oldView);
 }
