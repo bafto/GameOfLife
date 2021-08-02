@@ -23,22 +23,27 @@ void GameOfLife::run()
 				{
 				case sf::Keyboard::W:
 				case sf::Keyboard::Up:
-					wnd.setView(sf::View(wnd.getView().getCenter() + sf::Vector2f(0.f, -cellSize), sf::Vector2f(wndSize, wndSize)));
+					wnd.setView(sf::View(wnd.getView().getCenter() + sf::Vector2f(0.f, -cellSize), wnd.getView().getSize()));
 					break;
 				case sf::Keyboard::A:
 				case sf::Keyboard::Left:
-					wnd.setView(sf::View(wnd.getView().getCenter() + sf::Vector2f(-cellSize, 0.f), sf::Vector2f(wndSize, wndSize)));
+					wnd.setView(sf::View(wnd.getView().getCenter() + sf::Vector2f(-cellSize, 0.f), wnd.getView().getSize()));
 					break;
 				case sf::Keyboard::S:
 				case sf::Keyboard::Down:
-					wnd.setView(sf::View(wnd.getView().getCenter() + sf::Vector2f(0.f, cellSize), sf::Vector2f(wndSize, wndSize)));
+					wnd.setView(sf::View(wnd.getView().getCenter() + sf::Vector2f(0.f, cellSize), wnd.getView().getSize()));
 					break;
 				case sf::Keyboard::D:
 				case sf::Keyboard::Right:
-					wnd.setView(sf::View(wnd.getView().getCenter() + sf::Vector2f(cellSize, 0.f), sf::Vector2f(wndSize, wndSize)));
+					wnd.setView(sf::View(wnd.getView().getCenter() + sf::Vector2f(cellSize, 0.f), wnd.getView().getSize()));
 					break;
 				default: break;
 				}
+				break;
+			}
+			case sf::Event::MouseWheelScrolled:
+			{
+				wnd.setView(sf::View(wnd.getView().getCenter(), sf::Vector2f(wnd.getView().getSize() + sf::Vector2f(cellSize * -e.mouseWheelScroll.delta * 2, cellSize * -e.mouseWheelScroll.delta * 2))));
 				break;
 			}
 			default: break;
@@ -77,13 +82,16 @@ void GameOfLife::drawGrid()
 	shape.setOutlineColor(sf::Color(128, 128, 128));
 	shape.setOutlineThickness(1);
 	sf::View lastView = wnd.getView();
-	wnd.setView(sf::View(sf::FloatRect(0.f, 0.f, wndSize, wndSize)));
-	for (unsigned int y = 0; y < (wndSize / cellSize); y++)
+	sf::View tempView = lastView;
+	tempView.setCenter(sf::Vector2f(0.f + tempView.getSize().x / 2, 0.f + tempView.getSize().y / 2));
+	wnd.setView(tempView);
+	sf::Vector2f mousePosView = wnd.mapPixelToCoords(mousePosWnd);
+	for (unsigned int y = 0; y < (int)(tempView.getSize().y / cellSize); y++)
 	{
-		for (unsigned int x = 0; x < (wndSize / cellSize); x++)
+		for (unsigned int x = 0; x < (int)(tempView.getSize().x / cellSize); x++)
 		{
-			shape.setPosition(sf::Vector2f(x * (float)cellSize, y * (float)cellSize));
-			if (shape.getGlobalBounds().contains((sf::Vector2f)mousePosWnd))
+			shape.setPosition(sf::Vector2f(x * cellSize, y * cellSize));
+			if (shape.getGlobalBounds().contains((sf::Vector2f)mousePosView))
 				shape.setFillColor(sf::Color(170, 170, 170));
 			wnd.draw(shape);
 			shape.setFillColor(sf::Color::Transparent);
